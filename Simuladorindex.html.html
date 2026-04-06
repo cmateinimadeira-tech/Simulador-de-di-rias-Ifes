@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Simulador Distribuição de Valores - Diárias e Passagens 2026</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+        
+        @page {
+            size: A4;
+            margin: 1.2cm;
+        }
+        
+        body {
+            background: #e2e8f0;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .container {
+            max-width: 21cm;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            padding: 16px 20px 24px 20px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .btn-salvar, .btn-remover, #btnSalvarSimulacao, .no-print-button {
+                display: none !important;
+            }
+            .section {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                border: 1px solid #ccc;
+            }
+            input {
+                border: 1px solid #aaa;
+                background: white;
+                color: black;
+            }
+        }
+        
+        h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 0.4rem;
+            color: #1e4663;
+            border-left: 4px solid #f39c12;
+            padding-left: 14px;
+        }
+        
+        .sub {
+            color: #2c3e50;
+            background: #f8f9fc;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 8px 0 16px 0;
+            font-size: 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .section {
+            background: #ffffff;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid #e9ecef;
+            overflow-x: auto;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 10px 14px 6px 14px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            color: #0f3b5c;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        
+        th, td {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 6px 8px;
+            text-align: right;
+            vertical-align: middle;
+        }
+        
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+        
+        td:first-child, th:first-child {
+            text-align: left;
+            font-weight: 500;
+            padding-left: 10px;
+        }
+        
+        .input-cell {
+            background-color: #fff6e5;
+            text-align: center;
+        }
+        
+        .result-cell {
+            background-color: #e6f7e6;
+            font-weight: 500;
+            color: #1e4620;
+        }
+        
+        .editable-cell {
+            background-color: #fff6e5;
+        }
+        
+        input.numeric-field {
+            width: 70px;
+            padding: 5px 3px;
+            text-align: center;
+            border: 1px solid #f1b24a;
+            border-radius: 6px;
+            font-weight: 500;
+            background-color: #fffaf0;
+            font-size: 0.75rem;
+            transition: 0.1s;
+        }
+        
+        input.percent-field {
+            width: 65px;
+            padding: 4px 3px;
+            text-align: center;
+            border: 1px solid #f1b24a;
+            border-radius: 6px;
+            font-weight: 500;
+            background-color: #fffaf0;
+            font-size: 0.7rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #e67e22;
+            box-shadow: 0 0 0 2px rgba(230,126,34,0.2);
+            background: white;
+        }
+        
+        .warning {
+            background: #fff0db;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .total-bar {
+            background: #ecfdf5;
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            border: 1px solid #c6f0da;
+            font-size: 0.7rem;
+        }
+        
+        .badge {
+            background: #2c7a4d;
+            color: white;
+            border-radius: 24px;
+            padding: 2px 8px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        
+        .total-value {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #14532d;
+        }
+        
+        .rateio-config {
+            background: #fef7e0;
+            padding: 8px 12px;
+            margin: 8px 12px 12px 12px;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.7rem;
+        }
+        
+        .rateio-config label {
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .rateio-config input {
+            width: 60px;
+            background: white;
+        }
+        
+        .info-table {
+            background: #f8fafc;
+            margin: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.7rem;
+        }
+        
+        .info-table th, .info-table td {
+            padding: 5px 8px;
+        }
+        
+        .cards-simulacoes {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin: 12px;
+        }
+        
+        .card {
+            width: 100%;
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #d4dcec;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a2a3a 100%);
+            color: white;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-body {
+            padding: 14px;
+            font-size: 0.85rem;
+        }
+        
+        .card-body table {
+            width: 100%;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+        }
+        
+        .card-body td {
+            padding: 6px 5px;
+            font-size: 0.8rem;
+        }
+        
+        .card-body th {
+            font-size: 0.75rem;
+            background-color: #f8fafc;
+        }
+        
+        .card-body strong {
+            font-size: 0.85rem;
+            display: block;
+            margin: 10px 0 6px 0;
+            color: #1e4663;
+        }
+        
+        .btn-salvar {
+            background: #f39c12;
+            border: none;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            transition: 0.2s;
+            margin-top: 6px;
+            width: 100%;
+        }
+        
+        .btn-salvar:hover {
+            background: #e67e22;
+        }
+        
+        .btn-remover {
+            background: #e74c3c;
+            border: none;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .simulacoes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .footer-note {
+            font-size: 0.65rem;
+            color: #4a5568;
+            text-align: center;
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+            line-height: 1.4;
+        }
+        
+        .footer-note strong {
+            color: #2c7a4d;
+        }
+        
+        .inline-flex {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .small-note {
+            font-size: 0.6rem;
+            color: #6c757d;
+            margin-top: 3px;
+        }
+        
+        .card-value-large {
+            font-weight: 700;
+            color: #14532d;
+        }
+        
+        @media (max-width: 700px) {
+            body {
+                padding: 8px;
+            }
+            .container {
+                padding: 12px;
+            }
+            input.numeric-field {
+                width: 60px;
+            }
+            .rateio-config {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .card-body {
+                padding: 10px;
+                font-size: 0.75rem;
+            }
+            .card-body table {
+                font-size: 0.7rem;
+            }
+            .card-body td {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💰 Simulador Distribuição de Valores<br>Despesas com Diárias e Passagens 2026</h1>
+    <div class="sub">
+        🟠 Laranja = editáveis | 🟢 Verde = calculados automaticamente<br>
+        📐 <strong>Lógica:</strong> Item 1 define percentuais por tipo de viagem. O valor <strong>"DOCENTES"</strong> alimenta o Item 2 (rateio entre coordenadorias).<br>
+        ✏️ Números de <strong>alunos e professores</strong> por coordenadoria são editáveis (digite normalmente vários dígitos).
+    </div>
+
+    <!-- SEÇÃO 1 -->
+    <div class="section">
+        <div class="section-title">1. Simulação - Percentuais por Tipo de Viagem</div>
+        <div style="padding: 0 10px 6px 10px; font-size:0.65rem; color:#7f8c8d;">
+            A soma dos percentuais deve ser igual a 100%.
+        </div>
+        <table>
+            <thead><tr><th style="text-align:left">Tipo de Viagem</th><th>Percentual (%)</th><th>Valor Alocado (R$)</th></tr></thead>
+            <tbody>
+                <tr><td>Convocacao</td><td class="input-cell"><input type="number" class="percent-field" id="pctConv" step="0.5" value="25" min="0" max="100"> %</td><td class="result-cell" id="valConv">R$ 0,00</td></tr>
+                <tr><td>A Servico</td><td class="input-cell"><input type="number" class="percent-field" id="pctServico" step="0.5" value="30" min="0" max="100"> %</td><td class="result-cell" id="valServico">R$ 0,00</td></tr>
+                <tr><td>Encontro/Seminario, congresso e treinamento ADM</td><td class="input-cell"><input type="number" class="percent-field" id="pctADM" step="0.5" value="15" min="0" max="100"> %</td><td class="result-cell" id="valADM">R$ 0,00</td></tr>
+                <tr><td>Encontro/Seminario, congresso e treinamento DOCENTES</td><td class="input-cell"><input type="number" class="percent-field" id="pctDocente" step="0.5" value="30" min="0" max="100"> %</td><td class="result-cell" id="valDocente">R$ 0,00</td></tr>
+            </tbody>
+        </table>
+        <div style="padding: 8px 12px 12px 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;">
+            <div class="inline-flex"><strong>Valor Anual Total:</strong> 
+                <input type="text" id="valorTotalAnual" value="R$ 80.000,00" style="width:130px; background:#fff6e5; font-weight:bold; text-align:center; border-radius:6px; border:1px solid #f1b24a; padding:5px;">
+                <span id="somaPercentWarning" class="warning">Soma: <span id="somaPercentVal">100</span>%</span>
+            </div>
+            <div class="badge">Total = R$ <span id="totalDistribuidoLabel">80.000,00</span></div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 2 -->
+    <div class="section">
+        <div class="section-title">2. Distribuicao entre Coordenadorias (base no valor DOCENTES)</div>
+        <div class="info-table">
+            <table style="margin:0; background:#fef9e6;">
+                <thead><tr><th>Coordenadoria de Curso</th><th>Alunos (base)</th><th>Professores (base)</th></tr></thead>
+                <tbody>
+                    <tr><td>Tecnico em quimica</td><td>242</td><td>15</td></tr>
+                    <tr><td>Tecnico em mecanica</td><td>296</td><td>15</td></tr>
+                    <tr><td>Engenharia mecanica</td><td>169</td><td>14</td></tr>
+                    <tr><td>Quimica industrial</td><td>76</td><td>10</td></tr>
+                    <tr><td>Licenciatura em quimica</td><td>59</td><td>13</td></tr>
+                    <tr style="background:#e9ecef; font-weight:bold;"><td>Total</td><td>842</td><td>67</td></tr>
+                </tbody>
+            </table>
+            <div class="small-note" style="padding: 4px 10px;">Observacao: Numeros de alunos e professores por coordenadoria podem ser editados livremente.</div>
+        </div>
+
+        <div class="rateio-config">
+            <div><strong>Criterios de Rateio (% do valor DOCENTES)</strong></div>
+            <label>Igualitario: <input type="number" id="pctIgualitario" step="5" value="30" min="0" max="100"> %</label>
+            <label>Por Alunos: <input type="number" id="pctAlunos" step="5" value="20" min="0" max="100"> %</label>
+            <label>Por Professores: <input type="number" id="pctProfessores" step="5" value="50" min="0" max="100"> %</label>
+            <div><span class="badge" style="background:#e67e22;">Soma: <span id="somaRateio">100</span>%</span></div>
+        </div>
+        
+        <div style="padding: 4px 12px 0 12px; font-size:0.7rem;">
+            <strong>Valor base:</strong> R$ <span id="valorBaseDocentes" style="font-weight:800; color:#c0392b;">0,00</span> (valor "DOCENTES" do Item 1)
+        </div>
+        
+        <table id="tabelaCursos">
+            <thead>
+                <tr>
+                    <th style="text-align:left">Coordenadoria</th>
+                    <th class="editable-cell">Alunos</th>
+                    <th class="editable-cell">Professores</th>
+                    <th>Igualitario</th>
+                    <th>Alunos</th>
+                    <th>Professores</th>
+                    <th style="background:#e0f2e0">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="corpoCursos"></tbody>
+            <tfoot style="background:#f1f5f9; font-weight:700;">
+                <tr>
+                    <td colspan="2"><strong>VALORES TOTAIS</strong></td>
+                    <td></td>
+                    <td id="sumIgualitario">R$ 0,00</td>
+                    <td id="sumAlunos">R$ 0,00</td>
+                    <td id="sumProfessores">R$ 0,00</td>
+                    <td id="sumTotalCursos" style="background:#c8e6d9;">R$ 0,00</td>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="total-bar">
+            <span>Verificacao: <strong>Total distribuido</strong> deve ser igual ao <strong>valor DOCENTES</strong> (R$ <span id="totalAlocadoVerif">0,00</span>)</span>
+            <span class="total-value" id="igualdadeCheck">OK</span>
+        </div>
+    </div>
+
+    <!-- SEÇÃO 3 - Simulações (agora são impressas) -->
+    <div class="section">
+        <div class="section-title">3. Simulacoes Registradas</div>
+        <div style="padding: 8px 12px;">
+            <button id="btnSalvarSimulacao" style="background:#2c7a4d; color:white; border:none; padding:8px 20px; border-radius:30px; font-weight:bold; cursor:pointer; margin-bottom:12px; font-size:0.8rem;">Salvar Simulacao Atual</button>
+            <div id="cardsContainer" class="simulacoes-container"></div>
+            <div id="nenhumaSimulacaoMsg" style="text-align:center; color:#6c757d; padding:16px; font-size:0.8rem;">Nenhuma simulacao salva. Clique em "Salvar Simulacao" para registrar cenarios.</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <strong>Desenvolvido por Cleiton Mateini Madeira / Diretoria de Administração e Planejamento - Ifes Campus Aracruz</strong><br>
+        Formato A4 vertical | Itens 1 e 2 com campos editaveis. Simulações salvas agora são exibidas na impressão.
+    </div>
+</div>
+
+<script>
+    // Dados estáticos dos cursos
+    const cursosBase = [
+        { nome: "Tecnico em quimica", alunos: 242, profs: 15 },
+        { nome: "Tecnico em mecanica", alunos: 296, profs: 15 },
+        { nome: "Engenharia mecanica", alunos: 169, profs: 14 },
+        { nome: "Quimica industrial", alunos: 76, profs: 10 },
+        { nome: "Licenciatura em quimica", alunos: 59, profs: 13 }
+    ];
+    
+    // Elementos DOM
+    const pctConv = document.getElementById('pctConv');
+    const pctServico = document.getElementById('pctServico');
+    const pctADM = document.getElementById('pctADM');
+    const pctDocente = document.getElementById('pctDocente');
+    const valorTotalAnualInput = document.getElementById('valorTotalAnual');
+    const valConvSpan = document.getElementById('valConv');
+    const valServicoSpan = document.getElementById('valServico');
+    const valADMSpan = document.getElementById('valADM');
+    const valDocenteSpan = document.getElementById('valDocente');
+    const somaPercentSpan = document.getElementById('somaPercentVal');
+    const totalDistribuidoLabel = document.getElementById('totalDistribuidoLabel');
+    const valorBaseDocentesSpan = document.getElementById('valorBaseDocentes');
+    const totalAlocadoVerifSpan = document.getElementById('totalAlocadoVerif');
+    const igualdadeCheckSpan = document.getElementById('igualdadeCheck');
+    const corpoCursos = document.getElementById('corpoCursos');
+    const sumIgualitarioSpan = document.getElementById('sumIgualitario');
+    const sumAlunosSpan = document.getElementById('sumAlunos');
+    const sumProfessoresSpan = document.getElementById('sumProfessores');
+    const sumTotalCursosSpan = document.getElementById('sumTotalCursos');
+    const pctIgualitarioInput = document.getElementById('pctIgualitario');
+    const pctAlunosInput = document.getElementById('pctAlunos');
+    const pctProfessoresInput = document.getElementById('pctProfessores');
+    const somaRateioSpan = document.getElementById('somaRateio');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const nenhumaMsg = document.getElementById('nenhumaSimulacaoMsg');
+    
+    let simulacoes = [];
+    let currentTotalAnualNumber = 80000;
+    
+    // Funções auxiliares
+    function formatMoney(value) { 
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(value); 
+    }
+    function formatMoneyRaw(value) { 
+        return value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); 
+    }
+    
+    function parseBrazilianCurrency(str) {
+        if (!str) return 0;
+        let cleaned = str.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+    }
+    
+    function updateCurrencyDisplay() {
+        valorTotalAnualInput.value = formatMoney(currentTotalAnualNumber);
+    }
+    
+    function handleCurrencyInput() {
+        let rawValue = valorTotalAnualInput.value;
+        let numeric = parseBrazilianCurrency(rawValue);
+        if (!isNaN(numeric) && numeric >= 0) {
+            currentTotalAnualNumber = numeric;
+        } else {
+            currentTotalAnualNumber = 0;
+        }
+        updateCurrencyDisplay();
+        refreshAll();
+    }
+    
+    function getTotalAnual() {
+        return currentTotalAnualNumber;
+    }
+    
+    // Item 1: atualiza valores dos tipos de viagem e retorna o valor DOCENTES
+    function updateItem1() {
+        let pctC = parseFloat(pctConv.value) || 0;
+        let pctS = parseFloat(pctServico.value) || 0;
+        let pctA = parseFloat(pctADM.value) || 0;
+        let pctD = parseFloat(pctDocente.value) || 0;
+        let totalAnual = getTotalAnual();
+        let sumPct = pctC + pctS + pctA + pctD;
+        somaPercentSpan.innerText = sumPct.toFixed(2);
+        let valConv = totalAnual * (pctC/100);
+        let valServ = totalAnual * (pctS/100);
+        let valADMcalc = totalAnual * (pctA/100);
+        let valDocCalc = totalAnual * (pctD/100);
+        valConvSpan.innerText = formatMoney(valConv);
+        valServicoSpan.innerText = formatMoney(valServ);
+        valADMSpan.innerText = formatMoney(valADMcalc);
+        valDocenteSpan.innerText = formatMoney(valDocCalc);
+        totalDistribuidoLabel.innerText = formatMoneyRaw(totalAnual);
+        return valDocCalc;
+    }
+    
+    function validarSomaRateio() {
+        let pIgual = parseFloat(pctIgualitarioInput.value) || 0;
+        let pAlun = parseFloat(pctAlunosInput.value) || 0;
+        let pProf = parseFloat(pctProfessoresInput.value) || 0;
+        let soma = pIgual + pAlun + pProf;
+        somaRateioSpan.innerText = soma.toFixed(1);
+        if (Math.abs(soma - 100) > 0.1) somaRateioSpan.style.color = "#e67e22";
+        else somaRateioSpan.style.color = "#2c7a4d";
+        return { pIgual, pAlun, pProf, soma };
+    }
+    
+    // Obtém os valores atuais dos campos de alunos e professores (sem recriar)
+    function getAlunosProfessoresAtuais() {
+        let alunos = [], profs = [];
+        for (let i = 0; i < cursosBase.length; i++) {
+            let inpAluno = document.getElementById(`aluno_${i}`);
+            let inpProf = document.getElementById(`prof_${i}`);
+            let alunoVal = inpAluno ? parseFloat(inpAluno.value) : cursosBase[i].alunos;
+            let profVal = inpProf ? parseFloat(inpProf.value) : cursosBase[i].profs;
+            if (isNaN(alunoVal) || alunoVal < 0) alunoVal = 0;
+            if (isNaN(profVal) || profVal < 0) profVal = 0;
+            alunos.push(alunoVal);
+            profs.push(profVal);
+        }
+        return { alunos, profs };
+    }
+    
+    // Atualiza apenas as células de resultado da tabela (não recria os inputs)
+    function updateItem2(valorDocentes) {
+        if (isNaN(valorDocentes) || valorDocentes < 0) valorDocentes = 0;
+        valorBaseDocentesSpan.innerText = formatMoneyRaw(valorDocentes);
+        
+        let { pIgual, pAlun, pProf, soma } = validarSomaRateio();
+        let fator = (Math.abs(soma-100) > 0.01 && soma > 0) ? 100/soma : 1;
+        pIgual *= fator;
+        pAlun *= fator;
+        pProf *= fator;
+        
+        const valorIgualTotal = valorDocentes * (pIgual/100);
+        const valorAlunosTotal = valorDocentes * (pAlun/100);
+        const valorProfTotal = valorDocentes * (pProf/100);
+        const valorIgualPorCurso = valorIgualTotal / cursosBase.length;
+        
+        let { alunos, profs } = getAlunosProfessoresAtuais();
+        let totalAlunosAtual = alunos.reduce((a,b)=>a+b,0);
+        let totalProfAtual = profs.reduce((a,b)=>a+b,0);
+        
+        let sumIgual = 0, sumAlunosVal = 0, sumProfVal = 0, sumTotal = 0;
+        
+        for (let i = 0; i < cursosBase.length; i++) {
+            let alunoCurso = alunos[i];
+            let profCurso = profs[i];
+            let igual = valorIgualPorCurso;
+            let parteAlunos = (totalAlunosAtual > 0 && valorAlunosTotal > 0) ? (alunoCurso / totalAlunosAtual) * valorAlunosTotal : 0;
+            let parteProf = (totalProfAtual > 0 && valorProfTotal > 0) ? (profCurso / totalProfAtual) * valorProfTotal : 0;
+            let totalCurso = igual + parteAlunos + parteProf;
+            
+            sumIgual += igual;
+            sumAlunosVal += parteAlunos;
+            sumProfVal += parteProf;
+            sumTotal += totalCurso;
+            
+            // Atualiza células existentes
+            let igualCell = document.getElementById(`igual_${i}`);
+            let alunosCell = document.getElementById(`alunosParte_${i}`);
+            let profsCell = document.getElementById(`profsParte_${i}`);
+            let totalCell = document.getElementById(`totalCurso_${i}`);
+            if (igualCell) igualCell.innerText = formatMoney(igual);
+            if (alunosCell) alunosCell.innerText = formatMoney(parteAlunos);
+            if (profsCell) profsCell.innerText = formatMoney(parteProf);
+            if (totalCell) totalCell.innerText = formatMoney(totalCurso);
+        }
+        
+        // Atualiza totais do rodapé
+        sumIgualitarioSpan.innerText = formatMoney(sumIgual);
+        sumAlunosSpan.innerText = formatMoney(sumAlunosVal);
+        sumProfessoresSpan.innerText = formatMoney(sumProfVal);
+        sumTotalCursosSpan.innerText = formatMoney(sumTotal);
+        totalAlocadoVerifSpan.innerText = formatMoneyRaw(sumTotal);
+        
+        let diff = Math.abs(sumTotal - valorDocentes);
+        if (diff < 0.01 && valorDocentes > 0) igualdadeCheckSpan.innerHTML = "OK (valores batem)";
+        else if (valorDocentes === 0) igualdadeCheckSpan.innerHTML = "Valor DOCENTES = 0";
+        else igualdadeCheckSpan.innerHTML = `Diferenca: R$ ${diff.toFixed(2)}`;
+    }
+    
+    // Cria a tabela estática (inputs) e associa eventos
+    function buildStaticTable() {
+        let html = '';
+        for (let i = 0; i < cursosBase.length; i++) {
+            let curso = cursosBase[i];
+            html += `<tr id="row_${i}">
+                <td style="text-align:left">${curso.nome}</td>
+                <td class="input-cell"><input type="text" class="numeric-field" id="aluno_${i}" value="${curso.alunos}" inputmode="numeric" style="width:70px;"></td>
+                <td class="input-cell"><input type="text" class="numeric-field" id="prof_${i}" value="${curso.profs}" inputmode="numeric" style="width:70px;"></td>
+                <td class="result-cell" id="igual_${i}">R$ 0,00</td>
+                <td class="result-cell" id="alunosParte_${i}">R$ 0,00</td>
+                <td class="result-cell" id="profsParte_${i}">R$ 0,00</td>
+                <td style="background:#d9f0e1; font-weight:700;" id="totalCurso_${i}">R$ 0,00</td>
+            </tr>`;
+        }
+        corpoCursos.innerHTML = html;
+        
+        // Adiciona eventos para os campos de entrada
+        for (let i = 0; i < cursosBase.length; i++) {
+            let inpAluno = document.getElementById(`aluno_${i}`);
+            let inpProf = document.getElementById(`prof_${i}`);
+            
+            const sanitizeAndUpdate = (e) => {
+                let val = parseInt(e.target.value.replace(/[^\d]/g, ''), 10);
+                if (isNaN(val)) val = 0;
+                e.target.value = val;
+                let vdoc = updateItem1();
+                updateItem2(vdoc);
+            };
+            
+            if (inpAluno) {
+                inpAluno.addEventListener('blur', sanitizeAndUpdate);
+                inpAluno.addEventListener('input', function(e) {
+                    // permite digitação livre, apenas filtra caracteres não numéricos em tempo real
+                    this.value = this.value.replace(/[^\d]/g, '');
+                });
+            }
+            if (inpProf) {
+                inpProf.addEventListener('blur', sanitizeAndUpdate);
+                inpProf.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^\d]/g, '');
+                });
+            }
+        }
+    }
+    
+    // Dados para simulação (coleta valores atuais)
+    function obterDadosSimulacao() {
+        let valorConv = parseBrazilianCurrency(valConvSpan.innerText);
+        let valorServ = parseBrazilianCurrency(valServicoSpan.innerText);
+        let valorADM = parseBrazilianCurrency(valADMSpan.innerText);
+        let valorDoc = parseBrazilianCurrency(valDocenteSpan.innerText);
+        
+        let tipoViagens = {
+            convocacao: { pct: parseFloat(pctConv.value)||0, valor: valorConv },
+            aServico: { pct: parseFloat(pctServico.value)||0, valor: valorServ },
+            adm: { pct: parseFloat(pctADM.value)||0, valor: valorADM },
+            docentes: { pct: parseFloat(pctDocente.value)||0, valor: valorDoc }
+        };
+        let totalAnual = getTotalAnual();
+        let rateio = { pctIgual: parseFloat(pctIgualitarioInput.value)||0, pctAlunos: parseFloat(pctAlunosInput.value)||0, pctProfessores: parseFloat(pctProfessoresInput.value)||0 };
+        let { alunos, profs } = getAlunosProfessoresAtuais();
+        let cursosDistribuicao = [];
+        for (let i = 0; i < cursosBase.length; i++) {
+            let totalCell = document.getElementById(`totalCurso_${i}`);
+            let valorTotal = totalCell ? parseBrazilianCurrency(totalCell.innerText) : 0;
+            cursosDistribuicao.push({ curso: cursosBase[i].nome, alunos: alunos[i], professores: profs[i], total: valorTotal });
+        }
+        let totalDistribuido = parseBrazilianCurrency(sumTotalCursosSpan.innerText);
+        let dataAtual = new Date();
+        let dataHora = dataAtual.toLocaleDateString('pt-BR') + ' ' + dataAtual.toLocaleTimeString('pt-BR');
+        return { tipoViagens, totalAnual, rateio, cursosDistribuicao, totalDistribuido, dataHora };
+    }
+    
+    function salvarSimulacao() {
+        let dados = obterDadosSimulacao();
+        simulacoes.unshift(dados);
+        if(simulacoes.length > 6) simulacoes.pop();
+        atualizarCards();
+    }
+    
+    function removerSimulacao(idx) {
+        simulacoes.splice(idx, 1);
+        atualizarCards();
+    }
+    
+    function atualizarCards() {
+        if(simulacoes.length === 0) { 
+            nenhumaMsg.style.display = "block"; 
+            cardsContainer.innerHTML = ''; 
+            return; 
+        }
+        nenhumaMsg.style.display = "none";
+        let cardsHtml = '';
+        for(let idx = 0; idx < simulacoes.length; idx++) {
+            let sim = simulacoes[idx];
+            cardsHtml += `
+            <div class="card">
+                <div class="card-header">
+                    <span>Simulacao - ${sim.dataHora}</span>
+                    <button class="btn-remover no-print-button" onclick="removerSimulacao(${idx})">Remover</button>
+                </div>
+                <div class="card-body">
+                    <strong>Item 1 - Tipos de Viagem</strong>
+                    <table style="width:100%">
+                        <tr><td>Convocacao</td><td>${sim.tipoViagens.convocacao.pct}%</td><td>${formatMoney(sim.tipoViagens.convocacao.valor)}</td></tr>
+                        <tr><td>A Servico</td><td>${sim.tipoViagens.aServico.pct}%</td><td>${formatMoney(sim.tipoViagens.aServico.valor)}</td></tr>
+                        <tr><td>ADM</td><td>${sim.tipoViagens.adm.pct}%</td><td>${formatMoney(sim.tipoViagens.adm.valor)}</td></tr>
+                        <tr><td>DOCENTES</td><td>${sim.tipoViagens.docentes.pct}%</td><td>${formatMoney(sim.tipoViagens.docentes.valor)}</td></tr>
+                        <tr style="background:#e9ecef;"><td><strong>Total Anual</strong></td><td colspan="2"><strong>${formatMoney(sim.totalAnual)}</strong></td></tr>
+                    </table>
+                    <strong>Rateio (Item 2)</strong>
+                    <table style="width:100%">
+                        <tr><td>Igualitario:</td><td>${sim.rateio.pctIgual}%</td><td>Alunos:</td><td>${sim.rateio.pctAlunos}%</td><td>Professores:</td><td>${sim.rateio.pctProfessores}%</td></tr>
+                    </table>
+                    <strong>Distribuicao por Coordenadoria</strong>
+                    <table style="width:100%">
+                        <thead><tr><th>Curso</th><th>Alunos</th><th>Professores</th><th>Total</th></tr></thead>
+                        <tbody>`;
+            for(let c of sim.cursosDistribuicao) {
+                cardsHtml += `<tr><td>${c.curso}</td><td>${c.alunos}</td><td>${c.professores}</td><td class="card-value-large">${formatMoney(c.total)}</td></tr>`;
+            }
+            cardsHtml += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="3">TOTAL GERAL</td><td>${formatMoney(sim.totalDistribuido)}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        }
+        cardsContainer.innerHTML = cardsHtml;
+    }
+    
+    function refreshAll() {
+        let valorDoc = updateItem1();
+        updateItem2(valorDoc);
+    }
+    
+    // Inicialização
+    function init() {
+        buildStaticTable();
+        
+        // Eventos dos controles
+        pctConv.addEventListener('input', refreshAll);
+        pctServico.addEventListener('input', refreshAll);
+        pctADM.addEventListener('input', refreshAll);
+        pctDocente.addEventListener('input', refreshAll);
+        pctIgualitarioInput.addEventListener('input', refreshAll);
+        pctAlunosInput.addEventListener('input', refreshAll);
+        pctProfessoresInput.addEventListener('input', refreshAll);
+        valorTotalAnualInput.addEventListener('input', handleCurrencyInput);
+        valorTotalAnualInput.addEventListener('blur', function() {
+            updateCurrencyDisplay();
+            refreshAll();
+        });
+        document.getElementById('btnSalvarSimulacao').addEventListener('click', salvarSimulacao);
+        window.removerSimulacao = removerSimulacao;
+        
+        updateCurrencyDisplay();
+        refreshAll();
+    }
+    
+    init();
+</script>
+</body>
+</html>
