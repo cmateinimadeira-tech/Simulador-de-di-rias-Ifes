@@ -1,7 +1,7 @@
 // Service worker do Método Horizonte: guarda as telas do app para uso sem internet.
 // Os dados do plano já ficam no aparelho; aqui só tratamos as páginas e os arquivos do app.
-const CACHE = "horizonte-v1";
-const ESSENCIAIS = ["/", "/mes", "/grade", "/novo", "/importar", "/conta", "/manifest.webmanifest", "/icone.svg"];
+const CACHE = "horizonte-v2";
+const ESSENCIAIS = ["/", "/mes", "/grade", "/cenarios", "/novo", "/importar", "/conta", "/manifest.webmanifest", "/icone.svg"];
 
 self.addEventListener("install", (evento) => {
   evento.waitUntil(

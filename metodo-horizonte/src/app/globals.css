@@ -11,6 +11,10 @@
   --negativo: #cf222e;
   --atencao: #9a6700;
   --cinza-grafico: #9aa3ad;
+  --serie-0: var(--acento);
+  --serie-1: #c2580c;
+  --serie-2: #1a7f37;
+  --serie-3: #8250df;
   --raio: 10px;
   --sombra: 0 1px 2px rgba(16, 24, 40, 0.06);
   color-scheme: light;
@@ -30,6 +34,9 @@
     --negativo: #ff6b6b;
     --atencao: #d29922;
     --cinza-grafico: #6b7480;
+    --serie-1: #f0883e;
+    --serie-2: #3fb950;
+    --serie-3: #b392f0;
     --sombra: none;
     color-scheme: dark;
   }
@@ -125,6 +132,13 @@ h2 {
 
 .conteudo-largo {
   padding: 16px 16px 48px;
+}
+
+/* Coluna de cartões; minmax(0, 1fr) deixa tabelas largas rolarem dentro do cartão. */
+.pilha {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .cartao {
@@ -680,6 +694,38 @@ table.grade tr.fechamento:first-of-type td {
   color: var(--negativo);
 }
 
+.opcao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 8px;
+  font-size: 0.9rem;
+}
+
+.lista-simulacoes {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 12px;
+}
+
+.lista-simulacoes li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.9rem;
+}
+
+.marcador {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
 .situacao {
   display: flex;
   flex-wrap: wrap;
@@ -734,8 +780,12 @@ table.grade tr.fechamento:first-of-type td {
   }
 
   .nav a {
-    padding: 8px 10px;
-    font-size: 0.9rem;
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
+
+  .nav a.so-computador {
+    display: none;
   }
 
   body {

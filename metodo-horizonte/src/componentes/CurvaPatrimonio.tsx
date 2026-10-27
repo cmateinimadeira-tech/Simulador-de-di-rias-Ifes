@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { rotuloMes } from "@/motor";
 import type { ResultadoPlano } from "@/motor";
-import { moeda, moedaCurta } from "./formato";
+import { moeda, moedaCurta, passoDaEscala } from "./formato";
 
 interface Props {
   resultado: ResultadoPlano;
@@ -38,7 +38,7 @@ export function CurvaPatrimonio({ resultado, mesAtual }: Props) {
   const todos = [...patrimonio, ...fundo, ...acumulado];
   const minimo = Math.min(0, ...todos);
   const maximo = Math.max(1, ...todos);
-  const passo = escolherPasso((maximo - minimo) / 4);
+  const passo = passoDaEscala((maximo - minimo) / 4);
   const yMin = Math.floor(minimo / passo) * passo;
   const yMax = Math.ceil(maximo / passo) * passo;
 
@@ -100,10 +100,4 @@ export function CurvaPatrimonio({ resultado, mesAtual }: Props) {
       </figcaption>
     </figure>
   );
-}
-
-function escolherPasso(bruto: number): number {
-  const potencia = Math.pow(10, Math.floor(Math.log10(Math.max(bruto, 1))));
-  for (const f of [1, 2, 2.5, 5, 10]) if (bruto <= f * potencia) return f * potencia;
-  return 10 * potencia;
 }

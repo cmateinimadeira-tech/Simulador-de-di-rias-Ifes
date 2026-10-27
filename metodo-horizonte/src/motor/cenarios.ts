@@ -6,7 +6,8 @@ import type { Cenario, Objeto, Plano } from "./tipos";
 export function aplicarCenario(plano: Plano, cenario: Cenario): Plano {
   let objetos: Objeto[] = plano.objetos.map((o) => ({ ...o, ajustes: { ...o.ajustes } }));
 
-  for (const alteracao of cenario.alteracoes) {
+  const alteracoes = [...cenario.alteracoes, ...(cenario.simulacoes ?? []).flatMap((s) => s.alteracoes)];
+  for (const alteracao of alteracoes) {
     switch (alteracao.tipo) {
       case "incluirObjeto":
         objetos.push(structuredClone(alteracao.objeto));
@@ -60,4 +61,22 @@ export function compararCenarios(plano: Plano, cenarios: Cenario[], opcoes?: Opc
     return { id, nome, resumo: resultado.resumo, patrimonio: resultado.patrimonio, acumulado: resultado.acumulado, resultado };
   };
   return [linha("base", "Plano atual", plano), ...cenarios.map((c) => linha(c.id, c.nome, aplicarCenario(plano, c)))];
+}
+
+/**
+ * Incorpora o cenário ao plano: as alterações passam a valer na base, o cenário sai
+ * da lista e fica registrado no histórico de cenários aplicados.
+ */
+export function aplicarCenarioAoPlano(plano: Plano, cenarioId: string, data: string): Plano {
+  const cenario = plano.cenarios?.find((c) => c.id === cenarioId);
+  if (!cenario) return plano;
+  const aplicado = aplicarCenario(plano, cenario);
+  return {
+    ...aplicado,
+    cenarios: (plano.cenarios ?? []).filter((c) => c.id !== cenarioId),
+    cenariosAplicados: [
+      ...(plano.cenariosAplicados ?? []),
+      { id: cenario.id, nome: cenario.nome, data, simulacoes: (cenario.simulacoes ?? []).map((s) => s.descricao) },
+    ],
+  };
 }

@@ -8,7 +8,8 @@ const LINKS = [
   { href: "/", rotulo: "Painel" },
   { href: "/mes", rotulo: "Mês" },
   { href: "/grade", rotulo: "Grade" },
-  { href: "/importar", rotulo: "Importar" },
+  { href: "/cenarios", rotulo: "Cenários" },
+  { href: "/importar", rotulo: "Importar", soComputador: true },
   { href: "/conta", rotulo: "Conta" },
 ];
 
@@ -22,7 +23,12 @@ export function Navegacao() {
       </Link>
       <nav className="nav" aria-label="Principal">
         {LINKS.map((l) => (
-          <Link key={l.href} href={l.href} aria-current={caminho === l.href ? "page" : undefined}>
+          <Link
+            key={l.href}
+            href={l.href}
+            className={l.soComputador ? "so-computador" : undefined}
+            aria-current={caminho === l.href ? "page" : undefined}
+          >
             {l.rotulo}
           </Link>
         ))}

@@ -177,7 +177,7 @@ export default function Conta() {
   };
 
   return (
-    <main className="conteudo" style={{ maxWidth: 760, display: "grid", gap: 12 }}>
+    <main className="conteudo pilha" style={{ maxWidth: 760 }}>
       <h1>Conta e configurações</h1>
       {plano ? (
         <>
@@ -197,6 +197,9 @@ export default function Conta() {
           outro aparelho.
         </p>
         <div className="acoes">
+          <Link className="botao" href="/importar">
+            Importar planilha
+          </Link>
           <button
             className="botao"
             disabled={!plano}

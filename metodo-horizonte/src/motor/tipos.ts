@@ -220,6 +220,8 @@ export interface Plano {
   /** Índice do mês → previsto original congelado. */
   linhaDeBase?: Record<number, LinhaDeBaseMes>;
   revisoes?: Revisao[];
+  cenarios?: Cenario[];
+  cenariosAplicados?: CenarioAplicado[];
 }
 
 export type Alteracao =
@@ -228,10 +230,28 @@ export type Alteracao =
   | { tipo: "removerObjeto"; objetoId: string }
   | { tipo: "ajustarValor"; objetoId: string; mes: number; valor: number | null };
 
+/** Uma decisão simulada (ex.: "comprar o carro financiado"), com as alterações que ela produz. */
+export interface Simulacao {
+  id: string;
+  descricao: string;
+  alteracoes: Alteracao[];
+}
+
 export interface Cenario {
   id: string;
   nome: string;
   /** Sobrescreve a taxa do Fundo do plano neste cenário. */
   taxaFundoMensal?: number;
+  /** Alterações avulsas (aplicadas antes das simulações). */
   alteracoes: Alteracao[];
+  simulacoes?: Simulacao[];
+}
+
+/** Registro de um cenário incorporado ao plano. */
+export interface CenarioAplicado {
+  id: string;
+  nome: string;
+  /** "AAAA-MM-DD" */
+  data: string;
+  simulacoes: string[];
 }

@@ -35,3 +35,10 @@ export function novoId(prefixo: string): string {
   const aleatorio = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
   return `${prefixo}-${aleatorio.slice(0, 8)}`;
 }
+
+/** Passo "redondo" de uma escala de eixo (1, 2, 2,5 ou 5 × potência de 10). */
+export function passoDaEscala(bruto: number): number {
+  const potencia = Math.pow(10, Math.floor(Math.log10(Math.max(bruto, 1))));
+  for (const f of [1, 2, 2.5, 5, 10]) if (bruto <= f * potencia) return f * potencia;
+  return 10 * potencia;
+}

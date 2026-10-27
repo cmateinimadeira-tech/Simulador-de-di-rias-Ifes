@@ -8,3 +8,4 @@ export * from "./calculo";
 export * from "./acompanhamento";
 export * from "./lancamentos";
 export * from "./cenarios";
+export * from "./simulacoes";
