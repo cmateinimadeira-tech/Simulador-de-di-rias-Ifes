@@ -1,0 +1,11 @@
+{
+  "name": "Método Horizonte",
+  "short_name": "Horizonte",
+  "description": "Planejamento financeiro pessoal e familiar com visão de longo prazo.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#1f6feb",
+  "icons": [{ "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

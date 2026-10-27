@@ -1,0 +1,175 @@
+// Tipos do Método Horizonte. Índices de mês são relativos ao início do plano:
+// 0 = primeiro mês do horizonte, horizonte - 1 = último.
+
+export interface AnoMes {
+  ano: number;
+  /** 1 = janeiro ... 12 = dezembro */
+  mes: number;
+}
+
+export type Bloco =
+  | "fixo"
+  | "anual"
+  | "variavel"
+  | "cartaoParcelado"
+  | "cartaoAVista"
+  | "planejamento"
+  | "entradas";
+
+export interface DefinicaoBloco {
+  id: Bloco;
+  nome: string;
+  natureza: "despesa" | "receita";
+}
+
+/** Os 7 blocos da metodologia, na ordem em que aparecem na grade. */
+export const BLOCOS: readonly DefinicaoBloco[] = [
+  { id: "fixo", nome: "Fixo mensal", natureza: "despesa" },
+  { id: "anual", nome: "Despesas anuais", natureza: "despesa" },
+  { id: "variavel", nome: "Variável mensal", natureza: "despesa" },
+  { id: "cartaoParcelado", nome: "Cartão parcelado", natureza: "despesa" },
+  { id: "cartaoAVista", nome: "Cartão à vista", natureza: "despesa" },
+  { id: "planejamento", nome: "Planejamento", natureza: "despesa" },
+  { id: "entradas", nome: "Entradas", natureza: "receita" },
+];
+
+export function definicaoBloco(id: Bloco): DefinicaoBloco {
+  const def = BLOCOS.find((b) => b.id === id);
+  if (!def) throw new Error(`Bloco desconhecido: ${id}`);
+  return def;
+}
+
+/** Reajuste anual aplicado a partir de um mês do ano (ex.: salário em janeiro). */
+export interface Reajuste {
+  /** 0.05 = 5% ao ano */
+  percentualAnual: number;
+  /** 1 a 12 */
+  mesDoAno: number;
+}
+
+export interface RegraFixo {
+  tipo: "fixo";
+  valor: number;
+  inicio: number;
+  fim?: number;
+  reajuste?: Reajuste;
+}
+
+/** Valor que cai todo mês, como o financiamento SAC da planilha ("mês anterior − 7"). */
+export interface RegraDecrescente {
+  tipo: "decrescente";
+  valorInicial: number;
+  reducaoMensal: number;
+  inicio: number;
+  fim?: number;
+}
+
+export interface RegraParcelado {
+  tipo: "parcelado";
+  parcela: number;
+  parcelas: number;
+  /** Mês da primeira fatura. */
+  inicio: number;
+}
+
+export interface RegraAnual {
+  tipo: "anual";
+  valor: number;
+  /** Meses do ano (1 a 12) em que o valor ocorre. */
+  mesesDoAno: number[];
+  inicio?: number;
+  fim?: number;
+  reajuste?: Reajuste;
+}
+
+export interface RegraUnico {
+  tipo: "unico";
+  valor: number;
+  mes: number;
+}
+
+export interface RegraManual {
+  tipo: "manual";
+  /** Índice do mês → valor. */
+  valores: Record<number, number>;
+}
+
+export interface RegraDivida {
+  tipo: "divida";
+  saldoDevedor: number;
+  /** 0.015 = 1,5% ao mês */
+  taxaMensal: number;
+  prazo: number;
+  sistema: "price" | "sac";
+  /** Mês da primeira parcela. */
+  inicio: number;
+  /** Amortizações extras por mês (quitação antecipada = saldo inteiro). */
+  amortizacoesExtras?: Record<number, number>;
+}
+
+export type Regra =
+  | RegraFixo
+  | RegraDecrescente
+  | RegraParcelado
+  | RegraAnual
+  | RegraUnico
+  | RegraManual
+  | RegraDivida;
+
+export type TipoRegra = Regra["tipo"];
+
+/**
+ * Papel especial de um objeto no fechamento:
+ * - aporteFundo: despesa do bloco Planejamento que alimenta o Fundo ("pague-se primeiro");
+ * - resgateFundo: entrada que sai do Fundo;
+ * - entradaPossivel: entrada incerta, fora do saldo conservador.
+ */
+export type FuncaoObjeto = "aporteFundo" | "resgateFundo" | "entradaPossivel";
+
+/** Uma linha da grade. */
+export interface Objeto {
+  id: string;
+  bloco: Bloco;
+  nome: string;
+  regra: Regra;
+  funcao?: FuncaoObjeto;
+  /** Ajustes manuais do planejado, que prevalecem sobre a regra. */
+  ajustes?: Record<number, number>;
+  /** Valores realizados por mês. */
+  realizado?: Record<number, number>;
+}
+
+export interface Fechamento {
+  /** Saldo real em conta informado ao fechar o mês. */
+  saldoReal: number;
+  data?: string;
+}
+
+export interface Plano {
+  id: string;
+  nome: string;
+  inicio: AnoMes;
+  /** Quantidade de meses do horizonte (12 a 48 no MVP). */
+  horizonte: number;
+  saldoInicialConta: number;
+  saldoInicialFundo: number;
+  /** Rendimento mensal do Fundo. 0 por padrão, como na planilha. */
+  taxaFundoMensal: number;
+  objetos: Objeto[];
+  /** Índice do mês → fechamento. */
+  fechamentos?: Record<number, Fechamento>;
+}
+
+export type Alteracao =
+  | { tipo: "incluirObjeto"; objeto: Objeto }
+  | { tipo: "alterarObjeto"; objetoId: string; regra?: Regra; nome?: string; funcao?: FuncaoObjeto | null }
+  | { tipo: "removerObjeto"; objetoId: string }
+  | { tipo: "ajustarValor"; objetoId: string; mes: number; valor: number | null };
+
+export interface Cenario {
+  id: string;
+  nome: string;
+  /** Sobrescreve a taxa do Fundo do plano neste cenário. */
+  taxaFundoMensal?: number;
+  alteracoes: Alteracao[];
+}

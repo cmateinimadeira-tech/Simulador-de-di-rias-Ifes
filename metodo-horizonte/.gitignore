@@ -1,0 +1,8 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+# Planilhas reais de clientes nunca entram no repositório
+*.xlsx
+!tests/fixtures/*.xlsx
