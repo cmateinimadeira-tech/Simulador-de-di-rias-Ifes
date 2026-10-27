@@ -126,6 +126,14 @@ export type TipoRegra = Regra["tipo"];
  */
 export type FuncaoObjeto = "aporteFundo" | "resgateFundo" | "entradaPossivel";
 
+/**
+ * Acompanhamento de um objeto num mês aberto:
+ * - quitado: o que foi pago encerra o mês (a sobra do previsto volta para o saldo);
+ * - restante: ainda falta pagar este valor, além do que já foi pago.
+ * Sem situação, falta pagar a diferença entre o previsto e o pago.
+ */
+export type SituacaoMes = { situacao: "quitado" } | { situacao: "restante"; valor: number };
+
 /** Uma linha da grade. */
 export interface Objeto {
   id: string;
@@ -137,12 +145,38 @@ export interface Objeto {
   ajustes?: Record<number, number>;
   /** Realizado informado direto por mês (soma-se aos lançamentos com data). */
   realizado?: Record<number, number>;
+  /** Situação do acompanhamento por mês. */
+  acompanhamento?: Record<number, SituacaoMes>;
 }
 
 export interface Fechamento {
   /** Saldo real em conta informado ao fechar o mês. */
   saldoReal: number;
   data?: string;
+}
+
+/** Previsto original de um mês, congelado quando o mês começa: o histórico do que estava planejado. */
+export interface LinhaDeBaseMes {
+  congeladoEm: string;
+  /** Objeto → previsto original. Objeto ausente = não existia (original 0). */
+  valores: Record<string, number>;
+}
+
+/** Retrato do mês registrado numa revisão (normalmente semanal). */
+export interface Revisao {
+  id: string;
+  /** "AAAA-MM-DD" */
+  data: string;
+  mes: number;
+  saldoVigente: number;
+  saldoOriginal: number | null;
+  despesasPagas: number;
+  despesasAPagar: number;
+  entradasRecebidas: number;
+  entradasAReceber: number;
+  acumuladoMes: number;
+  patrimonioFinal: number;
+  nota?: string;
 }
 
 /** Cartão de crédito: define em que mês uma compra é paga. */
@@ -183,6 +217,9 @@ export interface Plano {
   lancamentos?: Lancamento[];
   /** Renda recebida a partir deste dia conta para o mês seguinte (ex.: salário do dia 25). */
   diaCorteRenda?: number;
+  /** Índice do mês → previsto original congelado. */
+  linhaDeBase?: Record<number, LinhaDeBaseMes>;
+  revisoes?: Revisao[];
 }
 
 export type Alteracao =

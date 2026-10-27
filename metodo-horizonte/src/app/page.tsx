@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BLOCOS, mesesSemFechamento, rotuloMes, rotuloMesLongo } from "@/motor";
+import { BLOCOS, diasDesdeUltimaRevisao, mesesSemFechamento, rotuloMes, rotuloMesLongo } from "@/motor";
 import type { Alerta } from "@/motor";
 import { CurvaPatrimonio } from "@/componentes/CurvaPatrimonio";
 import { moeda } from "@/componentes/formato";
 import { planoExemplo } from "@/estado/exemplo";
-import { hojeAnoMes, usePlano } from "@/estado/PlanoContext";
+import { hojeAnoMes, hojeISO, usePlano } from "@/estado/PlanoContext";
 
 const ROTULO_GRAVIDADE: Record<Alerta["gravidade"], string> = {
   critico: "Crítico",
@@ -68,6 +68,10 @@ export default function Painel() {
   const saldo = resultado.saldo[mes]!;
   const conservador = resultado.saldoConservador[mes]!;
   const pendentes = mesesSemFechamento(plano, mesAtual).slice(-3);
+  const diasRevisao = diasDesdeUltimaRevisao(plano, hojeISO());
+  const revisaoAtrasada = !plano.fechamentos?.[mesAtual] && (diasRevisao === null || diasRevisao >= 7);
+  const saldoPrevisto = resultado.saldoPrevisto[mes]!;
+  const saldoOriginal = resultado.saldoOriginal[mes] ?? null;
   const alertas = resultado.alertas
     .filter((a) => a.mes >= mesAtual && a.mes < mesAtual + 12)
     .sort((a, b) => ORDEM_GRAVIDADE[a.gravidade] - ORDEM_GRAVIDADE[b.gravidade] || a.mes - b.mes)
@@ -106,10 +110,24 @@ export default function Painel() {
         </div>
       )}
 
+      {revisaoAtrasada && (
+        <div className="aviso faixa-pendente">
+          <span>
+            {diasRevisao === null ? "Nenhuma revisão registrada ainda." : `A última revisão foi há ${diasRevisao} dias.`} Lance os pagamentos da
+            semana e registre o retrato do mês.
+          </span>
+          <Link className="botao" href="/mes">
+            Fazer a revisão da semana
+          </Link>
+        </div>
+      )}
+
       <div className="grade-cartoes">
         <div className="cartao indicador">
-          <div className="rotulo">Saldo do mês</div>
+          <div className="rotulo">Saldo do mês (retrato atual)</div>
           <div className={`valor ${saldo < 0 ? "negativo" : ""}`}>{moeda(saldo)}</div>
+          {Math.abs(saldo - saldoPrevisto) > 0.5 && <div className="detalhe">Previsto: {moeda(saldoPrevisto)}</div>}
+          {saldoOriginal !== null && Math.abs(saldoOriginal - saldo) > 0.5 && <div className="detalhe">Original: {moeda(saldoOriginal)}</div>}
           {Math.abs(conservador - saldo) > 0.5 && <div className="detalhe">Sem entradas possíveis: {moeda(conservador)}</div>}
         </div>
         <div className="cartao indicador">

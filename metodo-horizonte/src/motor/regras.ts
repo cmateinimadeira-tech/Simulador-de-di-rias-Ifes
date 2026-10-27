@@ -1,6 +1,6 @@
 import { anoMesDoIndice } from "./meses";
 import { cronogramaDivida } from "./dividas";
-import type { AnoMes, Reajuste, Regra } from "./tipos";
+import type { AnoMes, Objeto, Plano, Reajuste, Regra } from "./tipos";
 
 interface Horizonte {
   inicio: AnoMes;
@@ -69,6 +69,16 @@ export function gerarValores(regra: Regra, plano: Horizonte): number[] {
     case "divida": {
       return cronogramaDivida(regra, n).parcelas;
     }
+  }
+  return valores;
+}
+
+/** Previsto atual do objeto: valores da regra, com os ajustes manuais por cima. */
+export function planejadoDoObjeto(objeto: Objeto, plano: Plano): number[] {
+  const valores = gerarValores(objeto.regra, plano);
+  for (const [chave, valor] of Object.entries(objeto.ajustes ?? {})) {
+    const m = Number(chave);
+    if (m >= 0 && m < plano.horizonte) valores[m] = valor;
   }
   return valores;
 }

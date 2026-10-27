@@ -5,5 +5,6 @@ export * from "./meses";
 export * from "./regras";
 export * from "./dividas";
 export * from "./calculo";
+export * from "./acompanhamento";
 export * from "./lancamentos";
 export * from "./cenarios";

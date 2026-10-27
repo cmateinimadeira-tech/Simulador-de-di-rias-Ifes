@@ -195,9 +195,12 @@ describe("cálculo do plano", () => {
     expect(r.alertas.some((a) => a.tipo === "desvioObjeto" && a.objetoId === "alu")).toBe(true);
   });
 
-  it("realizado de mês não fechado não altera a projeção", () => {
-    const r = calcularPlano(plano([salario, { ...aluguel, realizado: { 0: 9999 } }]));
-    expect(r.efetivo.alu![0]).toBe(3000);
+  it("pagamento acima do previsto num mês aberto já entra no retrato do mês", () => {
+    const r = calcularPlano(plano([salario, { ...aluguel, realizado: { 0: 3200 } }]));
+    expect(r.efetivo.alu![0]).toBe(3200);
+    expect(r.aPagar.alu![0]).toBe(0);
+    expect(r.saldoPrevisto[0]).toBe(7000);
+    expect(r.saldo[0]).toBe(6800);
   });
 
   it("alerta de mês negativo e de caixa negativo", () => {

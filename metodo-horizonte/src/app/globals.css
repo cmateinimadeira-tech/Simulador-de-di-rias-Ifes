@@ -680,6 +680,32 @@ table.grade tr.fechamento:first-of-type td {
   color: var(--negativo);
 }
 
+.situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--acento);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.celula.mudou-original {
+  text-decoration: underline dotted var(--atencao);
+  text-underline-offset: 3px;
+}
+
 .faixa-pendente {
   display: flex;
   flex-wrap: wrap;

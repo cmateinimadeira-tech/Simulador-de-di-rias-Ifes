@@ -8,14 +8,17 @@ Sistema web do Método Horizonte: planejamento financeiro pessoal e familiar com
   - 7 blocos da metodologia e regras de lançamento: fixo (com reajuste anual), decrescente, parcelado, anual, único, manual e dívida (Price/SAC, com amortização extra).
   - Fechamento mensal: saldo, saldo conservador (sem entradas possíveis), acumulado, Fundo (com aporte, resgate e rendimento opcional), saldo devedor e patrimônio.
   - Planejado × realizado: lançamentos com data entram no mês de competência (fatura do cartão pelo dia de fechamento e vencimento; renda após o dia de corte vai para o mês seguinte). Mês fechado usa o realizado e o saldo real em conta.
-  - Alertas: caixa negativo, mês negativo, desvio de objeto, vencimento anual e fim de dívida.
+  - Acompanhamento em tempo real: em cada mês aberto, o valor vigente de um objeto é o pago mais o que falta pagar. Por padrão falta a diferença entre previsto e pago; o objeto pode ser marcado como quitado (a sobra volta para o saldo) ou ter o restante ajustado.
+  - Linha de base: o previsto de cada mês é congelado quando o mês começa (previsto original), e fica no histórico mesmo que o previsto seja alterado depois. O saldo é mostrado em três versões: original, previsto atual e retrato atual (vigente).
+  - Revisões semanais: registro com data do retrato do mês (saldo, pago, a pagar, acumulado e patrimônio final), formando o histórico da evolução.
+  - Alertas: caixa negativo, mês negativo, desvio de objeto (em tempo real, assim que o pago passa do previsto), vencimento anual e fim de dívida.
   - Cenários: alterações aplicadas sobre a base, sem alterar o plano, e comparação lado a lado.
 - **Importador da planilha .xlsx** (`src/importador`): reconhece os blocos pelos nomes, respeita as fórmulas de subtotal, detecta a regra de cada linha e confere o resultado contra as linhas Saldo, Acumulado e Fundo. Ajustes digitados nas fórmulas viram uma linha visível de "Ajuste da planilha", e linhas fora da soma geram aviso.
 - **Interface** (Next.js, PWA instalável):
   - Painel com indicadores do mês, curva de patrimônio, alertas e totais por bloco.
   - Grade objetos × meses com edição de células (ajustes manuais), editor de regras e inclusão/exclusão de objetos.
   - Assistente de criação de plano, importação com relatório de conferência e um plano de exemplo fictício.
-  - Tela do mês (pensada para o celular): lançar gasto ou recebimento com data, cartão e descrição; planejado × realizado por objeto; fechar e reabrir o mês com o saldo real; troca de mês deslizando.
+  - Tela do mês (pensada para o celular): lançar gasto ou recebimento com data, cartão e descrição; pago, a pagar e situação de cada objeto (quitado, restante ajustado); saldo do mês comparado ao previsto e ao original; revisão semanal com histórico; fechar e reabrir o mês com o saldo real; troca de mês deslizando.
   - Conta: dados do plano, rendimento do Fundo, dia de corte, cartões, backup, restauração e exclusão dos dados.
   - Painel avisa os meses passados sem fechamento.
   - Uso sem internet: um service worker guarda as telas; lançamentos feitos offline ficam salvos no aparelho.

@@ -101,7 +101,10 @@ export default function PaginaGrade() {
       <div className="acoes" style={{ justifyContent: "space-between", marginBottom: 12 }}>
         <div>
           <h1 style={{ marginBottom: 0 }}>Grade de planejamento</h1>
-          <span className="secundario">Clique num valor para ajustá-lo; clique no nome para editar a regra. Valores em itálico são ajustes manuais.</span>
+          <span className="secundario">
+            A grade mostra o previsto. Clique num valor para ajustá-lo e no nome para editar a regra. Itálico: ajuste manual; sublinhado
+            pontilhado: diferente do previsto original. A linha &quot;Acompanhamento&quot; traz o efeito dos pagamentos no saldo.
+          </span>
         </div>
       </div>
 
@@ -133,7 +136,7 @@ export default function PaginaGrade() {
                         <small className="secundario">({objetos.length})</small>
                       </button>
                     </td>
-                    {resultado.totaisPorBloco[bloco.id].map((v, m) => (
+                    {resultado.totaisPrevistosPorBloco[bloco.id].map((v, m) => (
                       <td key={m} className={`valor${m === mesAtual ? " atual" : ""}`}>
                         <span>{valorCelula(v)}</span>
                       </td>
@@ -156,6 +159,16 @@ export default function PaginaGrade() {
                           {planejado.map((v, m) => {
                             const emEdicao = editando?.objetoId === objeto.id && editando.mes === m;
                             const ajustado = objeto.ajustes?.[m] !== undefined;
+                            const original = resultado.original[objeto.id]![m] ?? null;
+                            const mudouOriginal = original !== null && Math.abs(original - v) > 0.5;
+                            const pago = resultado.realizado[objeto.id]![m] ?? null;
+                            const dica = [
+                              ajustado ? "Ajuste manual: apague o valor para voltar à regra" : null,
+                              mudouOriginal ? `Previsto original: ${valorCelula(original!) || "0"}` : null,
+                              pago !== null ? `Pago: ${valorCelula(pago) || "0"} · falta: ${valorCelula(resultado.aPagar[objeto.id]![m]!) || "0"}` : null,
+                            ]
+                              .filter(Boolean)
+                              .join("\n");
                             return (
                               <td key={m} className={`valor${m === mesAtual ? " atual" : ""}`}>
                                 {emEdicao ? (
@@ -177,8 +190,8 @@ export default function PaginaGrade() {
                                   />
                                 ) : (
                                   <button
-                                    className={`celula${ajustado ? " ajustada" : ""}`}
-                                    title={ajustado ? "Ajuste manual: apague o valor para voltar à regra" : undefined}
+                                    className={`celula${ajustado ? " ajustada" : ""}${mudouOriginal ? " mudou-original" : ""}`}
+                                    title={dica || undefined}
                                     aria-label={`${objeto.nome} em ${rotuloMes(meses[m]!)}: ${valorCelula(v) || "0"}`}
                                     onClick={() => {
                                       cancelado.current = false;
@@ -215,8 +228,12 @@ export default function PaginaGrade() {
                 </Fragment>
               );
             })}
-            {linhaFechamento("Despesas", resultado.despesas)}
-            {linhaFechamento("Entradas", resultado.entradas)}
+            {linhaFechamento("Despesas previstas", resultado.despesasPrevistas)}
+            {linhaFechamento("Entradas previstas", resultado.entradasPrevistas)}
+            {linhaFechamento(
+              "Acompanhamento (pago e a pagar)",
+              resultado.saldo.map((s, m) => s - resultado.saldoPrevisto[m]!),
+            )}
             {linhaFechamento("Saldo do mês", resultado.saldo)}
             {linhaFechamento("Acumulado", resultado.acumulado)}
             {linhaFechamento("Fundo", resultado.fundo)}

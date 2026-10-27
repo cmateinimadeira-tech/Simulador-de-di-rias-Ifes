@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { calcularPlano, indiceDoAnoMes } from "@/motor";
+import { calcularPlano, garantirLinhaDeBase, indiceDoAnoMes } from "@/motor";
 import type { Plano, ResultadoPlano } from "@/motor";
 import { armazenamentoLocal } from "./armazenamento";
 
@@ -65,6 +65,13 @@ export function PlanoProvider({ children }: { children: ReactNode }) {
     const m = indiceDoAnoMes(plano.inicio, hojeAnoMes());
     return Math.min(Math.max(m, 0), plano.horizonte - 1);
   }, [plano]);
+
+  // Congela o previsto original dos meses que já começaram: o histórico do que estava planejado.
+  useEffect(() => {
+    if (!plano) return;
+    const comBase = garantirLinhaDeBase(plano, mesAtual, hojeISO());
+    if (comBase !== plano) salvar(comBase);
+  }, [plano, mesAtual, salvar]);
 
   const resultado = useMemo(() => (plano ? calcularPlano(plano, { mesReferencia: mesAtual }) : null), [plano, mesAtual]);
 

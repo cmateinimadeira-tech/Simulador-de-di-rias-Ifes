@@ -83,12 +83,12 @@ describe("realizado", () => {
     expect(removerLancamento(p, "a").lancamentos).toHaveLength(3);
   });
 
-  it("o realizado aparece mesmo em mês aberto, mas só entra no saldo quando o mês fecha", () => {
+  it("o pago entra no saldo em tempo real; ao fechar, vale o saldo real em conta", () => {
     let p = adicionarLancamento(plano(), { id: "a", objetoId: "mer", data: "2026-10-02", valor: 1500 });
     let r = calcularPlano(p);
     expect(r.realizado.mer![0]).toBe(1500);
     expect(r.realizado.mer![1]).toBeNull();
-    expect(r.saldo[0]).toBe(9000);
+    expect(r.saldo[0]).toBe(8500); // pagou 1.500 de um previsto de 1.000
 
     p = fecharMes(p, 0, { saldoReal: 8400, data: "2026-10-31" });
     r = calcularPlano(p);
@@ -98,7 +98,7 @@ describe("realizado", () => {
     expect(r.alertas.some((a) => a.tipo === "desvioObjeto" && a.objetoId === "mer")).toBe(true);
 
     p = reabrirMes(p, 0);
-    expect(calcularPlano(p).saldo[0]).toBe(9000);
+    expect(calcularPlano(p).acumulado[0]).toBe(8500);
   });
 
   it("lista meses passados sem fechamento", () => {

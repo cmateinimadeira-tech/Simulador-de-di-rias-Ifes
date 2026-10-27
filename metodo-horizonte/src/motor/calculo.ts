@@ -1,9 +1,10 @@
 import { anoMesDoIndice } from "./meses";
 import { cronogramaDivida } from "./dividas";
+import { valorVigente } from "./acompanhamento";
 import { realizadoPorObjeto } from "./lancamentos";
-import { gerarValores } from "./regras";
+import { planejadoDoObjeto } from "./regras";
 import { BLOCOS, definicaoBloco } from "./tipos";
-import type { AnoMes, Bloco, Objeto, Plano } from "./tipos";
+import type { AnoMes, Bloco, Plano } from "./tipos";
 
 export type GravidadeAlerta = "critico" | "atencao" | "informativo" | "positivo";
 
@@ -28,15 +29,28 @@ export interface ResumoPlano {
 
 export interface ResultadoPlano {
   meses: AnoMes[];
-  /** Planejado de cada objeto (regra + ajustes manuais). */
+  /** Previsto atual de cada objeto (regra + ajustes manuais). */
   planejado: Record<string, number[]>;
-  /** Realizado de cada objeto (null = nada lançado no mês), fechado ou não. */
+  /** Previsto original congelado (null = mês sem linha de base). */
+  original: Record<string, (number | null)[]>;
+  /** Pago ou recebido de cada objeto (null = nada lançado no mês), fechado ou não. */
   realizado: Record<string, (number | null)[]>;
-  /** Valor usado no cálculo: realizado nos meses fechados, planejado nos demais. */
+  /** Quanto ainda falta pagar ou receber no mês. */
+  aPagar: Record<string, number[]>;
+  /** Valor vigente usado no cálculo: pago + a pagar nos meses abertos; realizado nos fechados. */
   efetivo: Record<string, number[]>;
+  /** Totais vigentes por bloco. */
   totaisPorBloco: Record<Bloco, number[]>;
+  /** Totais do previsto atual por bloco. */
+  totaisPrevistosPorBloco: Record<Bloco, number[]>;
   despesas: number[];
   entradas: number[];
+  despesasPrevistas: number[];
+  entradasPrevistas: number[];
+  /** Saldo só com o previsto atual, sem o acompanhamento. */
+  saldoPrevisto: number[];
+  /** Saldo do previsto original congelado (null = mês sem linha de base). */
+  saldoOriginal: (number | null)[];
   entradasPossiveis: number[];
   saldo: number[];
   /** Saldo sem as entradas possíveis. */
@@ -62,27 +76,26 @@ export interface OpcoesCalculo {
 
 const zeros = (n: number) => new Array<number>(n).fill(0);
 
-export function planejadoDoObjeto(objeto: Objeto, plano: Plano): number[] {
-  const valores = gerarValores(objeto.regra, plano);
-  for (const [chave, valor] of Object.entries(objeto.ajustes ?? {})) {
-    const m = Number(chave);
-    if (m >= 0 && m < plano.horizonte) valores[m] = valor;
-  }
-  return valores;
-}
-
 export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): ResultadoPlano {
   const n = plano.horizonte;
   const fechamentos = plano.fechamentos ?? {};
   const meses = Array.from({ length: n }, (_, m) => anoMesDoIndice(plano.inicio, m));
 
+  const linhaDeBase = plano.linhaDeBase ?? {};
   const planejado: Record<string, number[]> = {};
+  const original: Record<string, (number | null)[]> = {};
   const realizado: Record<string, (number | null)[]> = {};
+  const aPagar: Record<string, number[]> = {};
   const efetivo: Record<string, number[]> = {};
   const realizadoMapa = realizadoPorObjeto(plano);
-  const totaisPorBloco = Object.fromEntries(BLOCOS.map((b) => [b.id, zeros(n)])) as Record<Bloco, number[]>;
+  const porBloco = () => Object.fromEntries(BLOCOS.map((b) => [b.id, zeros(n)])) as Record<Bloco, number[]>;
+  const totaisPorBloco = porBloco();
+  const totaisPrevistosPorBloco = porBloco();
   const despesas = zeros(n);
   const entradas = zeros(n);
+  const despesasPrevistas = zeros(n);
+  const entradasPrevistas = zeros(n);
+  const saldoOriginal: (number | null)[] = Array.from({ length: n }, (_, m) => (linhaDeBase[m] ? 0 : null));
   const entradasPossiveis = zeros(n);
   const aportes = zeros(n);
   const resgates = zeros(n);
@@ -93,21 +106,30 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
   for (const objeto of plano.objetos) {
     const plan = planejadoDoObjeto(objeto, plano);
     const real = plan.map((_, m) => realizadoMapa[objeto.id]?.[m] ?? null);
-    const efet = plan.map((v, m) => (fechamentos[m] && real[m] !== null ? real[m]! : v));
+    const valores = plan.map((v, m) => valorVigente(v, real[m]!, objeto.acompanhamento?.[m], !!fechamentos[m]));
+    const efet = valores.map((v) => v.vigente);
     planejado[objeto.id] = plan;
+    original[objeto.id] = plan.map((_, m) => (linhaDeBase[m] ? (linhaDeBase[m]!.valores[objeto.id] ?? 0) : null));
     realizado[objeto.id] = real;
+    aPagar[objeto.id] = valores.map((v) => v.aPagar);
     efetivo[objeto.id] = efet;
 
     const receita = definicaoBloco(objeto.bloco).natureza === "receita";
     for (let m = 0; m < n; m++) {
       const v = efet[m] ?? 0;
+      const previsto = plan[m] ?? 0;
+      const orig = original[objeto.id]![m];
       totaisPorBloco[objeto.bloco][m]! += v;
+      totaisPrevistosPorBloco[objeto.bloco][m]! += previsto;
+      if (orig !== null && orig !== undefined) saldoOriginal[m]! += receita ? orig : -orig;
       if (receita) {
         entradas[m]! += v;
+        entradasPrevistas[m]! += previsto;
         if (objeto.funcao === "entradaPossivel") entradasPossiveis[m]! += v;
         if (objeto.funcao === "resgateFundo") resgates[m]! += v;
       } else {
         despesas[m]! += v;
+        despesasPrevistas[m]! += previsto;
         if (objeto.funcao === "aporteFundo") aportes[m]! += v;
       }
     }
@@ -156,7 +178,7 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
     patrimonio[m] = fundo[m]! + acumulado[m]! - saldoDevedor[m]!;
   }
 
-  alertas.push(...alertasDoFechamento(plano, saldo, acumulado, planejado, efetivo, opcoes));
+  alertas.push(...alertasDoFechamento(plano, saldo, acumulado, planejado, realizado, opcoes));
   alertas.sort((a, b) => a.mes - b.mes);
 
   let menorAcumulado = { valor: Infinity, mes: 0 };
@@ -168,11 +190,18 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
   return {
     meses,
     planejado,
+    original,
     realizado,
+    aPagar,
     efetivo,
     totaisPorBloco,
+    totaisPrevistosPorBloco,
     despesas,
     entradas,
+    despesasPrevistas,
+    entradasPrevistas,
+    saldoPrevisto: entradasPrevistas.map((e, m) => e - despesasPrevistas[m]!),
+    saldoOriginal,
     entradasPossiveis,
     saldo,
     saldoConservador,
@@ -200,13 +229,12 @@ function alertasDoFechamento(
   saldo: number[],
   acumulado: number[],
   planejado: Record<string, number[]>,
-  efetivo: Record<string, number[]>,
+  realizado: Record<string, (number | null)[]>,
   opcoes: OpcoesCalculo,
 ): Alerta[] {
   const alertas: Alerta[] = [];
   const limite = opcoes.limiteDesvio ?? 0.1;
   const referencia = opcoes.mesReferencia ?? 0;
-  const fechamentos = plano.fechamentos ?? {};
   const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   for (let m = 0; m < plano.horizonte; m++) {
@@ -229,13 +257,13 @@ function alertasDoFechamento(
 
   for (const objeto of plano.objetos) {
     const plan = planejado[objeto.id]!;
-    const efet = efetivo[objeto.id]!;
+    const pago = realizado[objeto.id]!;
     const despesa = definicaoBloco(objeto.bloco).natureza === "despesa";
-    for (const chave of Object.keys(fechamentos)) {
-      const m = Number(chave);
+    // Desvio em tempo real: vale para mês aberto ou fechado, assim que o pago passa do previsto.
+    for (let m = 0; m < plano.horizonte; m++) {
       const p = plan[m] ?? 0;
-      const r = efet[m] ?? 0;
-      if (despesa && p > 0 && r > p * (1 + limite)) {
+      const r = pago[m];
+      if (despesa && r !== null && r !== undefined && p > 0 && r > p * (1 + limite)) {
         alertas.push({
           tipo: "desvioObjeto",
           gravidade: "atencao",
