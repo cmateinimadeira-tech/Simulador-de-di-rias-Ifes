@@ -135,7 +135,7 @@ export interface Objeto {
   funcao?: FuncaoObjeto;
   /** Ajustes manuais do planejado, que prevalecem sobre a regra. */
   ajustes?: Record<number, number>;
-  /** Valores realizados por mês. */
+  /** Realizado informado direto por mês (soma-se aos lançamentos com data). */
   realizado?: Record<number, number>;
 }
 
@@ -143,6 +143,27 @@ export interface Fechamento {
   /** Saldo real em conta informado ao fechar o mês. */
   saldoReal: number;
   data?: string;
+}
+
+/** Cartão de crédito: define em que mês uma compra é paga. */
+export interface Cartao {
+  id: string;
+  nome: string;
+  /** Dia do fechamento da fatura (1 a 31). Compras a partir deste dia vão para a fatura seguinte. */
+  diaFechamento: number;
+  /** Dia do vencimento da fatura (1 a 31). */
+  diaVencimento: number;
+}
+
+/** Um gasto ou recebimento realizado, lançado com data. */
+export interface Lancamento {
+  id: string;
+  objetoId: string;
+  /** Data da compra ou do recebimento, "AAAA-MM-DD". */
+  data: string;
+  valor: number;
+  cartaoId?: string;
+  descricao?: string;
 }
 
 export interface Plano {
@@ -158,6 +179,10 @@ export interface Plano {
   objetos: Objeto[];
   /** Índice do mês → fechamento. */
   fechamentos?: Record<number, Fechamento>;
+  cartoes?: Cartao[];
+  lancamentos?: Lancamento[];
+  /** Renda recebida a partir deste dia conta para o mês seguinte (ex.: salário do dia 25). */
+  diaCorteRenda?: number;
 }
 
 export type Alteracao =

@@ -50,5 +50,10 @@ export function planoExemplo(hoje: AnoMes): Plano {
     saldoInicialFundo: 12000,
     taxaFundoMensal: 0,
     objetos,
+    cartoes: [
+      { id: "ex-cartao-1", nome: "Cartão principal", diaFechamento: 3, diaVencimento: 10 },
+      { id: "ex-cartao-2", nome: "Cartão reserva", diaFechamento: 25, diaVencimento: 2 },
+    ],
+    diaCorteRenda: 25,
   };
 }

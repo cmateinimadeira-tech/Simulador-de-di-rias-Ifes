@@ -21,11 +21,12 @@ export function moedaCurta(valor: number): string {
   return `${sinal}R$ ${inteiroFmt.format(abs)}`;
 }
 
-/** Aceita "1.234,56", "1234,56", "1234.56" e "-50". Vazio devolve null. */
+/** Aceita "1.234,56", "1234,56", "5.000" (milhar), "1234.56" e "-50". Vazio devolve null. */
 export function lerValor(texto: string): number | null {
   const limpo = texto.trim().replace(/\s|R\$/g, "");
   if (limpo === "") return null;
-  const normalizado = limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".") : limpo;
+  const soMilhar = /^-?\d{1,3}(\.\d{3})+$/.test(limpo);
+  const normalizado = limpo.includes(",") || soMilhar ? limpo.replace(/\./g, "").replace(",", ".") : limpo;
   const n = Number(normalizado);
   return Number.isFinite(n) ? n : null;
 }

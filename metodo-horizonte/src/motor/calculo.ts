@@ -1,5 +1,6 @@
 import { anoMesDoIndice } from "./meses";
 import { cronogramaDivida } from "./dividas";
+import { realizadoPorObjeto } from "./lancamentos";
 import { gerarValores } from "./regras";
 import { BLOCOS, definicaoBloco } from "./tipos";
 import type { AnoMes, Bloco, Objeto, Plano } from "./tipos";
@@ -29,6 +30,8 @@ export interface ResultadoPlano {
   meses: AnoMes[];
   /** Planejado de cada objeto (regra + ajustes manuais). */
   planejado: Record<string, number[]>;
+  /** Realizado de cada objeto (null = nada lançado no mês), fechado ou não. */
+  realizado: Record<string, (number | null)[]>;
   /** Valor usado no cálculo: realizado nos meses fechados, planejado nos demais. */
   efetivo: Record<string, number[]>;
   totaisPorBloco: Record<Bloco, number[]>;
@@ -74,7 +77,9 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
   const meses = Array.from({ length: n }, (_, m) => anoMesDoIndice(plano.inicio, m));
 
   const planejado: Record<string, number[]> = {};
+  const realizado: Record<string, (number | null)[]> = {};
   const efetivo: Record<string, number[]> = {};
+  const realizadoMapa = realizadoPorObjeto(plano);
   const totaisPorBloco = Object.fromEntries(BLOCOS.map((b) => [b.id, zeros(n)])) as Record<Bloco, number[]>;
   const despesas = zeros(n);
   const entradas = zeros(n);
@@ -87,11 +92,10 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
 
   for (const objeto of plano.objetos) {
     const plan = planejadoDoObjeto(objeto, plano);
-    const efet = plan.map((v, m) => {
-      const real = objeto.realizado?.[m];
-      return fechamentos[m] && real !== undefined ? real : v;
-    });
+    const real = plan.map((_, m) => realizadoMapa[objeto.id]?.[m] ?? null);
+    const efet = plan.map((v, m) => (fechamentos[m] && real[m] !== null ? real[m]! : v));
     planejado[objeto.id] = plan;
+    realizado[objeto.id] = real;
     efetivo[objeto.id] = efet;
 
     const receita = definicaoBloco(objeto.bloco).natureza === "receita";
@@ -164,6 +168,7 @@ export function calcularPlano(plano: Plano, opcoes: OpcoesCalculo = {}): Resulta
   return {
     meses,
     planejado,
+    realizado,
     efetivo,
     totaisPorBloco,
     despesas,

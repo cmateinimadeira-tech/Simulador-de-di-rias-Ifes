@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Navegacao } from "@/componentes/Navegacao";
+import { RegistrarServiceWorker } from "@/componentes/RegistrarServiceWorker";
 import { PlanoProvider } from "@/estado/PlanoContext";
 import "./globals.css";
 
@@ -25,6 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <Navegacao />
           {children}
         </PlanoProvider>
+        <RegistrarServiceWorker />
       </body>
     </html>
   );

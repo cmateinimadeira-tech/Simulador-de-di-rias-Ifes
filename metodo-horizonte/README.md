@@ -1,13 +1,13 @@
 # Método Horizonte — MVP
 
-Sistema web do Método Horizonte: planejamento financeiro pessoal e familiar com horizonte de até 48 meses, controle planejado × realizado e simulação de decisões. Este diretório contém o release **R1** da especificação (motor de cálculo, grade e importação da planilha) e o início do painel.
+Sistema web do Método Horizonte: planejamento financeiro pessoal e familiar com horizonte de até 48 meses, controle planejado × realizado e simulação de decisões. Este diretório contém os releases **R1** (motor de cálculo, grade e importação da planilha) e **R2 — uso mensal** (lançamentos, cartões, fechamento do mês, uso offline), exceto login e banco de dados.
 
 ## O que já funciona
 
 - **Motor de cálculo** (`src/motor`): módulo TypeScript puro, sem dependência de tela ou banco.
   - 7 blocos da metodologia e regras de lançamento: fixo (com reajuste anual), decrescente, parcelado, anual, único, manual e dívida (Price/SAC, com amortização extra).
   - Fechamento mensal: saldo, saldo conservador (sem entradas possíveis), acumulado, Fundo (com aporte, resgate e rendimento opcional), saldo devedor e patrimônio.
-  - Planejado × realizado: mês fechado usa o realizado e o saldo real em conta.
+  - Planejado × realizado: lançamentos com data entram no mês de competência (fatura do cartão pelo dia de fechamento e vencimento; renda após o dia de corte vai para o mês seguinte). Mês fechado usa o realizado e o saldo real em conta.
   - Alertas: caixa negativo, mês negativo, desvio de objeto, vencimento anual e fim de dívida.
   - Cenários: alterações aplicadas sobre a base, sem alterar o plano, e comparação lado a lado.
 - **Importador da planilha .xlsx** (`src/importador`): reconhece os blocos pelos nomes, respeita as fórmulas de subtotal, detecta a regra de cada linha e confere o resultado contra as linhas Saldo, Acumulado e Fundo. Ajustes digitados nas fórmulas viram uma linha visível de "Ajuste da planilha", e linhas fora da soma geram aviso.
@@ -15,8 +15,12 @@ Sistema web do Método Horizonte: planejamento financeiro pessoal e familiar com
   - Painel com indicadores do mês, curva de patrimônio, alertas e totais por bloco.
   - Grade objetos × meses com edição de células (ajustes manuais), editor de regras e inclusão/exclusão de objetos.
   - Assistente de criação de plano, importação com relatório de conferência e um plano de exemplo fictício.
+  - Tela do mês (pensada para o celular): lançar gasto ou recebimento com data, cartão e descrição; planejado × realizado por objeto; fechar e reabrir o mês com o saldo real; troca de mês deslizando.
+  - Conta: dados do plano, rendimento do Fundo, dia de corte, cartões, backup, restauração e exclusão dos dados.
+  - Painel avisa os meses passados sem fechamento.
+  - Uso sem internet: um service worker guarda as telas; lançamentos feitos offline ficam salvos no aparelho.
 
-Nesta etapa o plano fica salvo **apenas no navegador** (localStorage), e a planilha importada é lida no próprio navegador, sem envio a servidor. Login, banco de dados e área do consultor entram nos próximos releases.
+Nesta etapa o plano fica salvo **apenas no navegador** (localStorage), e a planilha importada é lida no próprio navegador, sem envio a servidor. O acesso aos dados passa pela interface `Armazenamento` (`src/estado/armazenamento.ts`): o banco na nuvem entra como outra implementação dela, sem mudar as telas. Até lá, use o backup em Conta.
 
 ## Como rodar
 
@@ -47,12 +51,13 @@ src/motor/        cálculo do método (tipos, regras, dívidas, fechamento, cen�
 src/importador/   leitura da planilha .xlsx e conferência
 src/estado/       estado do plano no navegador e plano de exemplo
 src/componentes/  gráfico, editor de objetos, navegação e formatação
-src/app/          páginas: painel, grade, novo plano, importar
+src/app/          páginas: painel, mês, grade, novo plano, importar, conta
+public/sw.js      service worker (uso offline)
 tests/            testes do motor, do importador e da planilha de referência
 ```
 
 ## Próximos passos (releases da especificação)
 
-- **R2 — Uso mensal:** lançamento do realizado com data e cartão, fechamento do mês, visão de celular com um mês por vez, uso offline, conta de usuário e banco de dados com isolamento por plano.
+- **R2 — pendente:** conta de usuário (login com e-mail/Google e 2FA) e banco de dados com isolamento por plano. Depende da escolha e criação da conta no provedor (sugestão da especificação: PostgreSQL gerenciado com autenticação, como o Supabase, em região de São Paulo).
 - **R3 — Cenários e dívidas:** telas de criação e comparação de cenários e simulação de quitação (o motor já calcula).
 - **R4 — Consultor e família:** lista de clientes, comentários, rateio familiar, projetos, histórico e exportação.

@@ -6,8 +6,10 @@ import { usePlano } from "@/estado/PlanoContext";
 
 const LINKS = [
   { href: "/", rotulo: "Painel" },
+  { href: "/mes", rotulo: "Mês" },
   { href: "/grade", rotulo: "Grade" },
-  { href: "/importar", rotulo: "Importar planilha" },
+  { href: "/importar", rotulo: "Importar" },
+  { href: "/conta", rotulo: "Conta" },
 ];
 
 export function Navegacao() {

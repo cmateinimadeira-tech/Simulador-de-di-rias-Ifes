@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BLOCOS, rotuloMes, rotuloMesLongo } from "@/motor";
+import { BLOCOS, mesesSemFechamento, rotuloMes, rotuloMesLongo } from "@/motor";
 import type { Alerta } from "@/motor";
 import { CurvaPatrimonio } from "@/componentes/CurvaPatrimonio";
 import { moeda } from "@/componentes/formato";
@@ -67,6 +67,7 @@ export default function Painel() {
   const ultimo = resultado.meses[n - 1]!;
   const saldo = resultado.saldo[mes]!;
   const conservador = resultado.saldoConservador[mes]!;
+  const pendentes = mesesSemFechamento(plano, mesAtual).slice(-3);
   const alertas = resultado.alertas
     .filter((a) => a.mes >= mesAtual && a.mes < mesAtual + 12)
     .sort((a, b) => ORDEM_GRAVIDADE[a.gravidade] - ORDEM_GRAVIDADE[b.gravidade] || a.mes - b.mes)
@@ -91,6 +92,19 @@ export default function Painel() {
           </button>
         </div>
       </div>
+
+      {pendentes.length > 0 && (
+        <div className="aviso faixa-pendente">
+          <span>
+            {pendentes.length === 1 ? "Mês sem fechamento:" : "Meses sem fechamento:"} feche para o plano partir do saldo real.
+          </span>
+          {pendentes.map((m) => (
+            <Link key={m} className="botao" href={`/mes?m=${m}`}>
+              Fechar {rotuloMes(resultado.meses[m]!)}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="grade-cartoes">
         <div className="cartao indicador">
@@ -159,6 +173,9 @@ export default function Painel() {
             </tbody>
           </table>
           <div className="acoes" style={{ marginTop: 12 }}>
+            <Link className="botao" href="/mes">
+              Lançar no mês
+            </Link>
             <Link className="botao" href="/grade">
               Abrir a grade
             </Link>
